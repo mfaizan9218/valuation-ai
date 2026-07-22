@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Valuation.ai — Pricing strategy, analyzed</title>
+<meta name="description" content="A BYOAI pricing workbench. Generate tier recommendations, willingness-to-pay ranges, and elasticity-based revenue scenarios — with your own OpenAI, Anthropic, or Gemini key.">
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0C0E;
+    --panel:#111417;
+    --panel-2:#15181C;
+    --line:#23272C;
+    --line-soft:#1A1D21;
+    --ink:#E9E7DF;
+    --ink-dim:#A9ACAE;
+    --ink-faint:#797D80;
+    --amber:#F2B341;
+    --amber-dim:#8A6A2A;
+    --green:#5FD98A;
+    --red:#E2685B;
+    --radius:2px;
+
+    --display: 'Space Grotesk', system-ui, sans-serif;
+    --body: 'Inter', system-ui, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  a{color:inherit; text-decoration:none;}
+  img{max-width:100%; display:block;}
+
+  ::selection{background:var(--amber); color:#0A0C0E;}
+
+  a:focus-visible, button:focus-visible, input:focus-visible{
+    outline:2px solid var(--amber);
+    outline-offset:2px;
+    border-radius:1px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important;}
+  }
+
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 32px;
+  }
+  @media (max-width:640px){ .wrap{padding:0 20px;} }
+
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--amber);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:6px; height:6px;
+    background:var(--amber);
+    display:inline-block;
+    border-radius:1px;
+  }
+
+  h1,h2,h3{
+    font-family:var(--display);
+    font-weight:600;
+    letter-spacing:-0.01em;
+    color:var(--ink);
+  }
+
+  .btn{
+    font-family:var(--mono);
+    font-size:13px;
+    letter-spacing:.02em;
+    padding:13px 22px;
+    border-radius:var(--radius);
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border:1px solid var(--line);
+    transition:border-color .15s ease, background .15s ease, transform .15s ease;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .btn-primary{
+    background:var(--amber);
+    color:#0A0C0E;
+    border-color:var(--amber);
+    font-weight:600;
+  }
+  .btn-primary:hover{ background:#F7C766; transform:translateY(-1px); }
+  .btn-ghost{
+    background:transparent;
+    color:var(--ink-dim);
+  }
+  .btn-ghost:hover{ color:var(--ink); border-color:var(--ink-faint); }
+
+  /* ---------- NAV ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(10,12,14,0.86);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line-soft);
+  }
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 32px;
+    max-width:1180px; margin:0 auto;
+  }
+  .logo{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:18px;
+    letter-spacing:-0.01em;
+    display:flex; align-items:center; gap:10px;
+  }
+  .logo-mark{
+    width:20px; height:20px;
+    flex:none;
+  }
+  .logo-mark svg{ width:100%; height:100%; display:block; }
+  .nav-tag{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-faint);
+    border:1px solid var(--line);
+    padding:3px 8px;
+    border-radius:var(--radius);
+    margin-left:10px;
+  }
+  .nav-right{ display:flex; align-items:center; gap:10px; flex:none; }
+  @media (max-width:640px){
+    nav{padding:16px 20px;}
+    .nav-tag{display:none;}
+    .nav-right .btn{ padding:11px 14px; font-size:12px; }
+  }
+  @media (max-width:420px){
+    .nav-right .btn-ghost{ display:none; }
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    padding:96px 0 72px;
+    border-bottom:1px solid var(--line-soft);
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"";
+    position:absolute;
+    top:-200px; right:-200px;
+    width:600px; height:600px;
+    background:radial-gradient(circle, rgba(242,179,65,0.08), transparent 70%);
+    pointer-events:none;
+  }
+  .hero-grid{
+    display:grid;
+    grid-template-columns:1.05fr 0.95fr;
+    gap:64px;
+    align-items:start;
+    position:relative;
+  }
+  @media (max-width:920px){
+    .hero-grid{ grid-template-columns:1fr; gap:48px; }
+    .hero{ padding:56px 0 48px; }
+  }
+
+  .hero h1{
+    font-size:56px;
+    line-height:1.04;
+    margin:22px 0 22px;
+  }
+  .hero h1 em{
+    font-style:normal;
+    color:var(--amber);
+  }
+  @media (max-width:920px){ .hero h1{ font-size:38px; } }
+  @media (max-width:480px){ .hero h1{ font-size:32px; } }
+
+  .hero p.lede{
+    font-size:17px;
+    color:var(--ink-dim);
+    max-width:520px;
+    margin-bottom:34px;
+  }
+  .hero-ctas{ display:flex; gap:12px; flex-wrap:wrap; }
+
+  /* mini simulator card */
+  .sim-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    overflow:hidden;
+  }
+  .sim-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-faint);
+    letter-spacing:.06em;
+    text-transform:uppercase;
+  }
+  .sim-dot{ width:7px; height:7px; border-radius:50%; background:var(--green); display:inline-block; margin-right:6px; box-shadow:0 0 0 3px rgba(95,217,138,0.15);}
+  .sim-body{ padding:20px 18px 22px; }
+  .sim-row{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .sim-row .label{ font-family:var(--mono); font-size:12px; color:var(--ink-dim); }
+  .sim-row .val{ font-family:var(--mono); font-size:13px; color:var(--ink); }
+  .sim-slider{
+    width:100%;
+    appearance:none; -webkit-appearance:none;
+    height:20px;
+    background:transparent;
+    margin:10px 0 20px;
+    outline:none;
+  }
+  .sim-slider::-webkit-slider-runnable-track{
+    height:2px;
+    background:var(--line);
+    border-radius:1px;
+  }
+  .sim-slider::-moz-range-track{
+    height:2px;
+    background:var(--line);
+    border-radius:1px;
+  }
+  .sim-slider::-webkit-slider-thumb{
+    appearance:none; -webkit-appearance:none;
+    width:14px; height:14px;
+    background:var(--amber);
+    border-radius:1px;
+    cursor:pointer;
+    margin-top:-6px; /* centers 14px thumb on 2px track */
+    transition:transform .1s ease;
+  }
+  .sim-slider::-moz-range-thumb{
+    width:14px; height:14px;
+    background:var(--amber);
+    border:none; border-radius:1px;
+    cursor:pointer;
+    transition:transform .1s ease;
+  }
+  .sim-slider:active::-webkit-slider-thumb{ transform:scale(1.15); }
+  .sim-slider:active::-moz-range-thumb{ transform:scale(1.15); }
+  .sim-out{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    margin-top:4px;
+  }
+  .sim-out div{
+    background:var(--panel-2);
+    padding:14px 12px;
+  }
+  .sim-out .k{ font-family:var(--mono); font-size:10px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;}
+  .sim-out .v{ font-family:var(--mono); font-size:18px; color:var(--ink); }
+  .sim-out .delta-up{ color:var(--green); }
+  .sim-out .delta-down{ color:var(--red); }
+
+  /* ---------- SPEC SHEET ---------- */
+  .spec{
+    border-bottom:1px solid var(--line-soft);
+    padding:64px 0;
+  }
+  .spec-title{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-faint);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    margin-bottom:28px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .spec-title span.num{ color:var(--amber); }
+  .spec-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    border-top:1px solid var(--line);
+    border-left:1px solid var(--line);
+  }
+  .spec-cell{
+    border-right:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    padding:22px 20px;
+    min-height:96px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  .spec-cell .k{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    margin-bottom:8px;
+  }
+  .spec-cell .v{
+    font-size:15px;
+    color:var(--ink);
+    font-weight:500;
+  }
+  .spec-cell.big .v{
+    font-family:var(--display);
+    font-size:30px;
+    color:var(--amber);
+  }
+  @media (max-width:820px){ .spec-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:480px){ .spec-grid{ grid-template-columns:1fr; } }
+
+  /* ---------- CAPABILITIES ---------- */
+  .section{ padding:88px 0; border-bottom:1px solid var(--line-soft); }
+  .section-head{ margin-bottom:52px; max-width:640px; }
+  .section-head h2{ font-size:34px; margin-top:14px; }
+  @media (max-width:640px){ .section{ padding:60px 0; } .section-head h2{ font-size:26px; } }
+
+  .cap-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  @media (max-width:900px){ .cap-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:600px){ .cap-grid{ grid-template-columns:1fr; } }
+
+  .cap-card{
+    background:var(--panel);
+    padding:30px 26px;
+    transition:background .15s ease;
+  }
+  .cap-card:hover{ background:var(--panel-2); }
+  .cap-num{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--amber-dim);
+    margin-bottom:16px;
+  }
+  .cap-card h3{ font-size:17px; margin-bottom:10px; font-weight:600; }
+  .cap-card p{ font-size:14px; color:var(--ink-dim); line-height:1.6; }
+
+  /* ---------- METHOD ---------- */
+  .method-list{ counter-reset:step; }
+  .method-item{
+    display:grid;
+    grid-template-columns:80px 1fr;
+    gap:28px;
+    padding:28px 0;
+    border-top:1px solid var(--line-soft);
+  }
+  .method-item:last-child{ border-bottom:1px solid var(--line-soft); }
+  .method-roman{
+    font-family:var(--mono);
+    color:var(--amber);
+    font-size:14px;
+    padding-top:2px;
+  }
+  .method-item h3{ font-size:19px; margin-bottom:8px; }
+  .method-item p{ color:var(--ink-dim); font-size:14.5px; max-width:520px; }
+  @media (max-width:560px){ .method-item{ grid-template-columns:44px 1fr; gap:16px; } }
+
+  /* ---------- BYOAI ---------- */
+  .byoai-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:56px;
+    align-items:start;
+  }
+  @media (max-width:860px){ .byoai-grid{ grid-template-columns:1fr; gap:36px; } }
+  .byoai-copy h2{ font-size:32px; margin-bottom:16px; }
+  .byoai-copy p{ color:var(--ink-dim); font-size:15px; max-width:440px; line-height:1.65; }
+
+  .provider-list{ display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line); }
+  .provider-row{
+    background:var(--panel);
+    display:flex; justify-content:space-between; align-items:center;
+    padding:18px 20px;
+  }
+  .provider-name{ font-weight:600; font-size:15px; }
+  .provider-meta{ text-align:right; }
+  .provider-meta .tag{ font-family:var(--mono); font-size:11px; color:var(--amber); display:block; }
+  .provider-meta .model{ font-family:var(--mono); font-size:11px; color:var(--ink-faint); margin-top:3px; }
+
+  /* ---------- CTA ---------- */
+  .cta{
+    padding:100px 0;
+    text-align:center;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .cta .eyebrow{ justify-content:center; margin-bottom:18px; }
+  .cta h2{ font-size:40px; max-width:640px; margin:0 auto 30px; }
+  @media (max-width:640px){ .cta{ padding:64px 0; } .cta h2{ font-size:28px; } }
+  .cta-ctas{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+
+  /* ---------- FOOTER ---------- */
+  footer{ padding:40px 0; }
+  .foot-row{
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+  }
+  .foot-row .logo{ font-size:15px; }
+  .foot-meta{ font-family:var(--mono); font-size:12px; color:var(--ink-faint); }
+
+  .reveal{
+    opacity:0;
+    transform:translateY(14px);
+    transition:opacity .6s ease, transform .6s ease;
+  }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+
+  /* ---------- TOAST ---------- */
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:28px;
+    transform:translate(-50%, 12px);
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--ink);
+    font-family:var(--mono);
+    font-size:12.5px;
+    padding:13px 18px;
+    border-radius:4px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    box-shadow:0 12px 32px rgba(0,0,0,0.4);
+    z-index:100;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+    max-width:calc(100% - 40px);
+  }
+  .toast.show{
+    opacity:1;
+    transform:translate(-50%, 0);
+  }
+  .toast::before{
+    content:"";
+    width:6px; height:6px;
+    background:var(--amber);
+    flex:none;
+  }
+
+  /* ---------- PROVIDER STATUS ---------- */
+  .btn-small{ padding:8px 14px; font-size:12px; }
+  .provider-row{ display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+  .provider-main{ display:flex; flex-direction:column; gap:4px; }
+  .provider-status{ display:flex; align-items:center; gap:10px; }
+  .status-pill{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.04em;
+    color:var(--ink-faint);
+    border:1px solid var(--line);
+    padding:5px 10px;
+    border-radius:20px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    white-space:nowrap;
+  }
+  .status-pill::before{
+    content:"";
+    width:6px; height:6px;
+    border-radius:50%;
+    background:var(--ink-faint);
+  }
+  .status-pill.connected{
+    color:var(--green);
+    border-color:rgba(95,217,138,0.35);
+  }
+  .status-pill.connected::before{
+    background:var(--green);
+    box-shadow:0 0 0 3px rgba(95,217,138,0.15);
+  }
+
+  /* ---------- MODAL ---------- */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(6,7,8,0.72);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+    z-index:200;
+  }
+  .modal-overlay[hidden]{ display:none; }
+  .modal{
+    width:100%; max-width:420px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.5);
+  }
+  .modal-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:18px 20px;
+    border-bottom:1px solid var(--line);
+  }
+  .modal-head h3{ font-size:17px; }
+  .modal-close{
+    background:transparent; border:1px solid var(--line);
+    color:var(--ink-dim);
+    width:28px; height:28px;
+    border-radius:var(--radius);
+    cursor:pointer;
+    font-size:13px;
+    line-height:1;
+  }
+  .modal-close:hover{ color:var(--ink); border-color:var(--ink-faint); }
+  .modal-body{ padding:22px 20px 24px; }
+
+  .provider-tabs{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    margin-bottom:20px;
+  }
+  .provider-tab{
+    flex:1;
+    background:var(--panel-2);
+    color:var(--ink-dim);
+    border:none;
+    border-right:1px solid var(--line);
+    padding:10px 8px;
+    font-family:var(--mono);
+    font-size:12px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .provider-tab:last-child{ border-right:none; }
+  .provider-tab:hover{ color:var(--ink); }
+  .provider-tab.active{ background:var(--amber); color:#0A0C0E; font-weight:600; }
+
+  .field-label{
+    display:block;
+    font-family:var(--mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink-faint);
+    margin-bottom:8px;
+  }
+  .key-input-row{ display:flex; gap:8px; }
+  .key-input{
+    flex:1;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--ink);
+    font-family:var(--mono);
+    font-size:13px;
+    padding:11px 12px;
+    border-radius:var(--radius);
+    min-width:0;
+  }
+  .key-input:focus-visible{ outline:2px solid var(--amber); outline-offset:1px; }
+  .key-toggle{
+    flex:none;
+    width:40px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    color:var(--ink-dim);
+    cursor:pointer;
+    font-size:14px;
+  }
+  .key-toggle:hover{ color:var(--ink); }
+  .field-hint{
+    font-size:12.5px;
+    color:var(--ink-faint);
+    margin-top:10px;
+    line-height:1.5;
+  }
+  .modal-actions{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:22px;
+    gap:10px;
+  }
+  @media (max-width:420px){
+    .modal-actions{ flex-direction:column-reverse; align-items:stretch; }
+    .modal-actions .btn{ justify-content:center; width:100%; }
+  }
+
+  /* ---------- WORKBENCH ---------- */
+  .workbench[hidden]{ display:none; }
+  .workbench{
+    position:fixed; inset:0;
+    background:var(--bg);
+    z-index:150;
+    overflow-y:auto;
+    padding:36px 0 80px;
+  }
+  .wb-head{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    gap:20px;
+    margin-bottom:36px;
+  }
+  .wb-head h2{ font-size:28px; margin-top:10px; }
+  @media (max-width:640px){ .wb-head h2{ font-size:22px; } }
+
+  .wb-grid{
+    display:grid;
+    grid-template-columns:380px 1fr;
+    gap:40px;
+    align-items:start;
+  }
+  @media (max-width:900px){ .wb-grid{ grid-template-columns:1fr; } }
+
+  .wb-form{
+    display:flex; flex-direction:column; gap:6px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:22px;
+    position:sticky;
+    top:36px;
+  }
+  @media (max-width:900px){ .wb-form{ position:static; } }
+  .wb-form .field-label{ margin-top:14px; }
+  .wb-form .field-label:first-child{ margin-top:0; }
+
+  .wb-input{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:14px;
+    padding:11px 12px;
+    border-radius:var(--radius);
+  }
+  select.wb-input{
+    font-family:var(--mono);
+    font-size:12.5px;
+    cursor:pointer;
+  }
+  .wb-input:focus-visible{ outline:2px solid var(--amber); outline-offset:1px; }
+  .wb-textarea{ resize:vertical; min-height:76px; line-height:1.5; }
+  .wb-row-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+  .wb-form .btn{ margin-top:20px; justify-content:center; width:100%; }
+
+  .wb-no-key{
+    margin-top:16px;
+    font-size:12.5px;
+    color:var(--ink-dim);
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:12px 14px;
+    line-height:1.5;
+  }
+  .wb-link-btn{
+    background:none; border:none; padding:0;
+    color:var(--amber);
+    font-family:inherit; font-size:inherit;
+    text-decoration:underline;
+    cursor:pointer;
+  }
+  .wb-error{
+    margin-top:14px;
+    font-size:12.5px;
+    color:var(--red);
+    line-height:1.5;
+  }
+
+  .wb-results{ min-height:200px; }
+  .wb-placeholder{
+    border:1px dashed var(--line);
+    border-radius:6px;
+    padding:48px 24px;
+    text-align:center;
+    color:var(--ink-faint);
+    font-size:14px;
+  }
+  .wb-loading{
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:48px 24px;
+    text-align:center;
+    color:var(--ink-dim);
+    font-family:var(--mono);
+    font-size:13px;
+  }
+  .wb-loading .spin{
+    width:20px; height:20px;
+    margin:0 auto 16px;
+    border:2px solid var(--line);
+    border-top-color:var(--amber);
+    border-radius:50%;
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .wb-section-label{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin:28px 0 12px;
+  }
+  .wb-section-label:first-child{ margin-top:0; }
+
+  .tier-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  .result-tier{
+    background:var(--panel);
+    padding:20px;
+    display:flex; flex-direction:column;
+  }
+  .rt-head{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:6px; }
+  .rt-name{ font-family:var(--display); font-weight:600; font-size:16px; }
+  .rt-price{ font-family:var(--mono); color:var(--amber); font-size:14px; white-space:nowrap; }
+  .rt-segment{ font-size:12.5px; color:var(--ink-dim); margin-bottom:14px; }
+  .rt-features{ list-style:none; margin:0 0 14px; padding:0; display:flex; flex-direction:column; gap:6px; flex:1; }
+  .rt-features li{ font-size:13px; color:var(--ink); padding-left:14px; position:relative; }
+  .rt-features li::before{ content:"—"; position:absolute; left:0; color:var(--ink-faint); }
+  .rt-rationale{ font-size:12.5px; color:var(--ink-faint); line-height:1.55; margin-bottom:16px; }
+  .rt-sim-btn{ align-self:flex-start; }
+
+  .wtp-band{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  .wtp-band div{ background:var(--panel-2); padding:16px; text-align:center; }
+  .wtp-band .k{ font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); margin-bottom:6px; }
+  .wtp-band .v{ font-family:var(--display); font-size:20px; color:var(--amber); }
+
+  .competitor-list, .risk-list{ display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line); }
+  .competitor-row{ background:var(--panel); padding:14px 16px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .competitor-row .c-name{ font-weight:600; font-size:13.5px; }
+  .competitor-row .c-notes{ font-size:12.5px; color:var(--ink-dim); }
+  .competitor-row .c-price{ font-family:var(--mono); color:var(--amber); font-size:13px; white-space:nowrap; }
+  .risk-row{ background:var(--panel); padding:12px 16px; font-size:13px; color:var(--ink-dim); }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <div class="logo">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 20 20" fill="none">
+          <rect x="1.5" y="11" width="4" height="7.5" fill="#8A6A2A"/>
+          <rect x="8" y="6" width="4" height="12.5" fill="#F2B341"/>
+          <rect x="14.5" y="1.5" width="4" height="17" fill="#F2B341"/>
+        </svg>
+      </span>
+      Valuation.ai
+      <span class="nav-tag">BYOAI · v0.1</span>
+    </div>
+    <div class="nav-right">
+      <button class="btn btn-ghost" type="button" data-open-modal="">Connect an AI key</button>
+      <a class="btn btn-primary" href="#" data-open-workbench>Launch app →</a>
+    </div>
+  </nav>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow">BYOAI · v0.1</div>
+        <h1>Price like an <em>analyst</em>, not a guessing engine.</h1>
+        <p class="lede">Valuation.ai turns raw product context into structured tier recommendations, willingness-to-pay ranges, and elasticity-based revenue scenarios — using an AI key you own and control.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="#" data-open-workbench>Start a project →</a>
+          <button class="btn btn-ghost" type="button" data-open-modal="">Connect an AI key</button>
+        </div>
+      </div>
+
+      <div class="sim-card" aria-label="Interactive scenario simulator">
+        <div class="sim-head">
+          <span><span class="sim-dot"></span>Scenario simulator — Pro tier</span>
+          <span id="simTierCurrency">USD</span>
+        </div>
+        <div class="sim-body">
+          <div class="sim-row"><span class="label">Price / mo</span><span class="val" id="priceVal">$49</span></div>
+          <input class="sim-slider" type="range" id="priceSlider" min="19" max="129" value="49" step="1">
+
+          <div class="sim-row"><span class="label">Elasticity (ε)</span><span class="val" id="elastVal">−1.20</span></div>
+          <input class="sim-slider" type="range" id="elastSlider" min="40" max="260" value="120" step="5">
+
+          <div class="sim-out">
+            <div><div class="k">Volume</div><div class="v" id="volOut">—</div></div>
+            <div><div class="k">Revenue</div><div class="v" id="revOut">—</div></div>
+            <div><div class="k">Δ vs base</div><div class="v" id="deltaOut">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPEC SHEET -->
+  <section class="spec">
+    <div class="wrap">
+      <div class="spec-title"><span class="num">01</span> Spec sheet</div>
+      <div class="spec-grid">
+        <div class="spec-cell"><div class="k">Model</div><div class="v">GPT · Claude · Gemini</div></div>
+        <div class="spec-cell"><div class="k">Storage</div><div class="v">Local browser only</div></div>
+        <div class="spec-cell"><div class="k">Egress</div><div class="v">Direct to provider</div></div>
+        <div class="spec-cell"><div class="k">Output</div><div class="v">Tiers · WTP · Elasticity</div></div>
+        <div class="spec-cell"><div class="k">Runtime</div><div class="v">Client-side</div></div>
+        <div class="spec-cell"><div class="k">License</div><div class="v">You own the keys</div></div>
+        <div class="spec-cell big"><div class="k">Price</div><div class="v">$0/mo</div></div>
+        <div class="spec-cell"><div class="k">Billing</div><div class="v">You pay your provider directly. We store nothing.</div></div>
+
+        <div class="spec-cell big"><div class="k">Providers supported</div><div class="v">03</div></div>
+        <div class="spec-cell big"><div class="k">Client-side</div><div class="v">100%</div></div>
+        <div class="spec-cell big"><div class="k">Elasticity modeled</div><div class="v">ε</div></div>
+        <div class="spec-cell big"><div class="k">Structured output</div><div class="v">JSON</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAPABILITIES -->
+  <section class="section" id="capabilities">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="eyebrow">02 · Capabilities</div>
+        <h2>A workbench, not a chat window.</h2>
+      </div>
+      <div class="cap-grid reveal">
+        <div class="cap-card">
+          <div class="cap-num">01</div>
+          <h3>Tier recommendations</h3>
+          <p>Structured pricing tiers with target segments, feature lists, and rationale — generated from your project context.</p>
+        </div>
+        <div class="cap-card">
+          <div class="cap-num">02</div>
+          <h3>Willingness-to-pay</h3>
+          <p>Low / mid / high WTP bands in your project currency, calibrated against category and target market.</p>
+        </div>
+        <div class="cap-card">
+          <div class="cap-num">03</div>
+          <h3>Competitor context</h3>
+          <p>Named benchmarks with positioning notes and price points so recommendations sit inside a real market.</p>
+        </div>
+        <div class="cap-card">
+          <div class="cap-num">04</div>
+          <h3>Scenario simulator</h3>
+          <p>Drag price and elasticity sliders on top of any tier. Revenue, volume, and Δ% recompute in real time.</p>
+        </div>
+        <div class="cap-card">
+          <div class="cap-num">05</div>
+          <h3>Multi-run history</h3>
+          <p>Every analysis is versioned locally. Compare runs across providers without losing prior recommendations.</p>
+        </div>
+        <div class="cap-card">
+          <div class="cap-num">06</div>
+          <h3>Risks &amp; assumptions</h3>
+          <p>Every recommendation ships with the assumptions it depends on, so you can pressure-test before shipping a number.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- METHOD -->
+  <section class="section" id="method">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="eyebrow">03 · Method</div>
+        <h2>From blank canvas to a defensible number in three moves.</h2>
+      </div>
+      <div class="method-list reveal">
+        <div class="method-item">
+          <div class="method-roman">I</div>
+          <div>
+            <h3>Describe the product</h3>
+            <p>Name, category, currency, target market, positioning notes. Five fields, no wizard.</p>
+          </div>
+        </div>
+        <div class="method-item">
+          <div class="method-roman">II</div>
+          <div>
+            <h3>Run the analysis</h3>
+            <p>Your key, direct to the provider. Structured JSON parsed into tiers, WTP, competitors, risks.</p>
+          </div>
+        </div>
+        <div class="method-item">
+          <div class="method-roman">III</div>
+          <div>
+            <h3>Simulate scenarios</h3>
+            <p>Branch any tier into a what-if. Watch revenue respond to price and elasticity in real time.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BYOAI -->
+  <section class="section" id="byoai">
+    <div class="wrap byoai-grid">
+      <div class="byoai-copy reveal">
+        <div class="eyebrow">04 · BYOAI</div>
+        <h2>Your key. Your data. Your bill.</h2>
+        <p>Valuation.ai never proxies your requests. Keys are stored in this browser only. Every analysis is a direct call from your device to the provider you chose.</p>
+      </div>
+      <div class="provider-list reveal" id="providerList">
+        <div class="provider-row" data-provider="openai">
+          <div class="provider-main">
+            <span class="provider-name">OpenAI</span>
+            <span class="provider-meta"><span class="tag">JSON mode</span><span class="model">gpt-4o-mini</span></span>
+          </div>
+          <div class="provider-status">
+            <span class="status-pill" data-status>Not connected</span>
+            <button class="btn btn-ghost btn-small" type="button" data-open-modal="openai">Connect</button>
+          </div>
+        </div>
+        <div class="provider-row" data-provider="anthropic">
+          <div class="provider-main">
+            <span class="provider-name">Anthropic</span>
+            <span class="provider-meta"><span class="tag">Tool-shaped output</span><span class="model">claude-3-5-haiku-latest</span></span>
+          </div>
+          <div class="provider-status">
+            <span class="status-pill" data-status>Not connected</span>
+            <button class="btn btn-ghost btn-small" type="button" data-open-modal="anthropic">Connect</button>
+          </div>
+        </div>
+        <div class="provider-row" data-provider="google">
+          <div class="provider-main">
+            <span class="provider-name">Google</span>
+            <span class="provider-meta"><span class="tag">responseMimeType: JSON</span><span class="model">gemini-2.5-flash</span></span>
+          </div>
+          <div class="provider-status">
+            <span class="status-pill" data-status>Not connected</span>
+            <button class="btn btn-ghost btn-small" type="button" data-open-modal="google">Connect</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta" id="cta">
+    <div class="wrap">
+      <div class="eyebrow">Ready</div>
+      <h2>Stop pricing by vibes.</h2>
+      <p style="color:var(--ink-dim); max-width:520px; margin:0 auto 34px; font-size:15px;">Bring a key, describe a product, get a defensible pricing model in under a minute. Nothing to install, nothing to sign up for.</p>
+      <div class="cta-ctas">
+        <a class="btn btn-primary" href="#" data-open-workbench>Start a project →</a>
+        <button class="btn btn-ghost" type="button" data-open-modal="">Manage AI keys</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKBENCH -->
+  <section class="workbench" id="workbench" hidden>
+    <div class="wrap">
+      <div class="wb-head">
+        <div>
+          <div class="eyebrow">New project</div>
+          <h2>Describe the product, run the analysis.</h2>
+        </div>
+        <button class="btn btn-ghost btn-small" type="button" id="wbClose">Close</button>
+      </div>
+
+      <div class="wb-grid">
+        <form class="wb-form" id="wbForm">
+          <label class="field-label" for="projName">Product name</label>
+          <input class="wb-input" id="projName" type="text" placeholder="e.g. Ledgerline" required>
+
+          <label class="field-label" for="projCategory">Category</label>
+          <input class="wb-input" id="projCategory" type="text" placeholder="e.g. Expense tracking for freelancers" required>
+
+          <div class="wb-row-2">
+            <div>
+              <label class="field-label" for="projCurrency">Currency</label>
+              <select class="wb-input" id="projCurrency">
+                <option value="USD">USD — US Dollar</option>
+                <option value="EUR">EUR — Euro</option>
+                <option value="GBP">GBP — British Pound</option>
+                <option value="PKR">PKR — Pakistani Rupee</option>
+                <option value="INR">INR — Indian Rupee</option>
+                <option value="CAD">CAD — Canadian Dollar</option>
+                <option value="AUD">AUD — Australian Dollar</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="projProvider">Run with</label>
+              <select class="wb-input" id="projProvider"></select>
+            </div>
+          </div>
+
+          <label class="field-label" for="projMarket">Target market</label>
+          <input class="wb-input" id="projMarket" type="text" placeholder="e.g. Solo freelancers and small agencies, US/EU">
+
+          <label class="field-label" for="projNotes">Positioning notes</label>
+          <textarea class="wb-input wb-textarea" id="projNotes" placeholder="What makes this different, who it's for, anything that should shape the pricing."></textarea>
+
+          <div class="wb-no-key" id="wbNoKey" hidden>
+            No AI key connected yet. <button type="button" class="wb-link-btn" id="wbConnectFromForm">Connect one</button> to run a live analysis.
+          </div>
+
+          <button class="btn btn-primary" type="submit" id="wbRunBtn">Run the analysis →</button>
+          <p class="wb-error" id="wbError" hidden></p>
+        </form>
+
+        <div class="wb-results" id="wbResults">
+          <div class="wb-placeholder">
+            <p>Structured tiers, willingness-to-pay bands, competitor context, and risks will appear here once you run an analysis.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- KEY MODAL -->
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h3 id="modalTitle">Connect an AI key</h3>
+      <button class="modal-close" type="button" id="modalClose" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="provider-tabs" role="tablist" aria-label="Provider">
+        <button class="provider-tab" type="button" role="tab" data-tab="openai">OpenAI</button>
+        <button class="provider-tab" type="button" role="tab" data-tab="anthropic">Anthropic</button>
+        <button class="provider-tab" type="button" role="tab" data-tab="google">Google</button>
+      </div>
+
+      <label class="field-label" for="apiKeyInput">API key</label>
+      <div class="key-input-row">
+        <input type="password" id="apiKeyInput" class="key-input" placeholder="sk-..." autocomplete="off" spellcheck="false">
+        <button class="key-toggle" type="button" id="keyToggle" aria-label="Show key">👁</button>
+      </div>
+      <p class="field-hint" id="modalHint">Stored only in this browser's local storage. Never sent anywhere but the provider you call directly.</p>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-small" type="button" id="removeKeyBtn">Remove key</button>
+        <button class="btn btn-primary btn-small" type="button" id="saveKeyBtn">Save key</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot-row">
+    <div class="logo">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 20 20" fill="none">
+          <rect x="1.5" y="11" width="4" height="7.5" fill="#8A6A2A"/>
+          <rect x="8" y="6" width="4" height="12.5" fill="#F2B341"/>
+          <rect x="14.5" y="1.5" width="4" height="17" fill="#F2B341"/>
+        </svg>
+      </span>
+      Valuation.ai
+    </div>
+    <div class="foot-meta">v0.1 · Client-side · No account required</div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  // ---- Toast helper ----
+  var toast = document.getElementById('toast');
+  var toastTimer;
+  function showToast(){
+    clearTimeout(toastTimer);
+    toast.classList.add('show');
+    toastTimer = setTimeout(function(){ toast.classList.remove('show'); }, 2600);
+  }
+
+  // ---- BYOAI key storage (this browser only, matches the app's storage claim) ----
+  var STORAGE_KEY = 'valuationai_keys';
+  var PROVIDERS = ['openai', 'anthropic', 'google'];
+  var PROVIDER_LABEL = { openai: 'OpenAI', anthropic: 'Anthropic', google: 'Google' };
+
+  function loadKeys(){
+    try{
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    }catch(err){
+      return {};
+    }
+  }
+  function saveKeys(keys){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(keys));
+      return true;
+    }catch(err){
+      // localStorage unavailable (private browsing, disabled storage, etc.)
+      return false;
+    }
+  }
+
+  var overlay = document.getElementById('modalOverlay');
+  var modalTitle = document.getElementById('modalTitle');
+  var tabs = document.querySelectorAll('.provider-tab');
+  var keyInput = document.getElementById('apiKeyInput');
+  var keyToggle = document.getElementById('keyToggle');
+  var saveKeyBtn = document.getElementById('saveKeyBtn');
+  var removeKeyBtn = document.getElementById('removeKeyBtn');
+  var modalHint = document.getElementById('modalHint');
+  var modalClose = document.getElementById('modalClose');
+  var lastFocused = null;
+  var activeProvider = 'openai';
+
+  function refreshStatusPills(){
+    var keys = loadKeys();
+    document.querySelectorAll('.provider-row').forEach(function(row){
+      var provider = row.getAttribute('data-provider');
+      var pill = row.querySelector('[data-status]');
+      var btn = row.querySelector('[data-open-modal]');
+      var connected = !!(keys[provider] && keys[provider].length);
+      pill.textContent = connected ? 'Connected' : 'Not connected';
+      pill.classList.toggle('connected', connected);
+      if(btn) btn.textContent = connected ? 'Edit' : 'Connect';
+    });
+  }
+
+  function setActiveTab(provider){
+    activeProvider = provider;
+    tabs.forEach(function(t){
+      t.classList.toggle('active', t.getAttribute('data-tab') === provider);
+    });
+    var keys = loadKeys();
+    keyInput.value = keys[provider] || '';
+    keyInput.type = 'password';
+    keyToggle.textContent = '👁';
+    modalTitle.textContent = 'Connect ' + PROVIDER_LABEL[provider];
+    modalHint.textContent = keys[provider]
+      ? 'Key saved in this browser. Update or remove it below.'
+      : "Stored only in this browser's local storage. Never sent anywhere but " + PROVIDER_LABEL[provider] + ' directly.';
+  }
+
+  function openModal(provider){
+    lastFocused = document.activeElement;
+    setActiveTab(provider || activeProvider || 'openai');
+    overlay.hidden = false;
+    setTimeout(function(){ keyInput.focus(); }, 0);
+  }
+  function closeModal(){
+    overlay.hidden = true;
+    if(lastFocused) lastFocused.focus();
+  }
+
+  document.querySelectorAll('[data-open-modal]').forEach(function(el){
+    el.addEventListener('click', function(){
+      var provider = el.getAttribute('data-open-modal');
+      openModal(provider || null);
+    });
+  });
+  modalClose.addEventListener('click', closeModal);
+  overlay.addEventListener('click', function(e){
+    if(e.target === overlay) closeModal();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && !overlay.hidden) closeModal();
+  });
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){ setActiveTab(tab.getAttribute('data-tab')); });
+  });
+  keyToggle.addEventListener('click', function(){
+    var showing = keyInput.type === 'text';
+    keyInput.type = showing ? 'password' : 'text';
+    keyToggle.textContent = showing ? '👁' : '🙈';
+    keyToggle.setAttribute('aria-label', showing ? 'Show key' : 'Hide key');
+  });
+  saveKeyBtn.addEventListener('click', function(){
+    var value = keyInput.value.trim();
+    if(!value){
+      keyInput.focus();
+      modalHint.textContent = 'Paste a key before saving — or use Remove key to clear it.';
+      modalHint.style.color = 'var(--red)';
+      return;
+    }
+    modalHint.style.color = '';
+    var keys = loadKeys();
+    keys[activeProvider] = value;
+    var ok = saveKeys(keys);
+    refreshStatusPills();
+    if(ok){
+      toast.textContent = PROVIDER_LABEL[activeProvider] + ' key saved to this browser.';
+      showToast();
+      closeModal();
+    } else {
+      modalHint.textContent = "This browser blocked local storage, so the key can't persist. It'll still work for this session only.";
+    }
+  });
+  removeKeyBtn.addEventListener('click', function(){
+    var keys = loadKeys();
+    delete keys[activeProvider];
+    saveKeys(keys);
+    keyInput.value = '';
+    refreshStatusPills();
+    toast.textContent = PROVIDER_LABEL[activeProvider] + ' key removed.';
+    showToast();
+  });
+
+  refreshStatusPills();
+
+  // ---- Workbench (Start a project / Launch app) ----
+  var workbench = document.getElementById('workbench');
+  var wbClose = document.getElementById('wbClose');
+  var wbForm = document.getElementById('wbForm');
+  var wbResults = document.getElementById('wbResults');
+  var wbNoKey = document.getElementById('wbNoKey');
+  var wbConnectFromForm = document.getElementById('wbConnectFromForm');
+  var wbError = document.getElementById('wbError');
+  var wbRunBtn = document.getElementById('wbRunBtn');
+  var projProvider = document.getElementById('projProvider');
+  var lastWbFocused = null;
+  var lastResultTiers = null;
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function stripFences(s){
+    return String(s || '').replace(/```json/gi, '').replace(/```/g, '').trim();
+  }
+
+  function populateProviderSelect(){
+    var keys = loadKeys();
+    var connected = PROVIDERS.filter(function(p){ return keys[p] && keys[p].length; });
+    projProvider.innerHTML = connected.map(function(p){
+      return '<option value="' + p + '">' + PROVIDER_LABEL[p] + '</option>';
+    }).join('');
+    var hasKey = connected.length > 0;
+    wbNoKey.hidden = hasKey;
+    wbRunBtn.disabled = !hasKey;
+    projProvider.disabled = !hasKey;
+    wbRunBtn.style.opacity = hasKey ? '' : '0.5';
+    wbRunBtn.style.cursor = hasKey ? '' : 'not-allowed';
+  }
+
+  function openWorkbench(){
+    lastWbFocused = document.activeElement;
+    populateProviderSelect();
+    workbench.hidden = false;
+    document.body.style.overflow = 'hidden';
+    setTimeout(function(){ document.getElementById('projName').focus(); }, 0);
+  }
+  function closeWorkbench(){
+    workbench.hidden = true;
+    document.body.style.overflow = '';
+    if(lastWbFocused) lastWbFocused.focus();
+  }
+
+  document.querySelectorAll('[data-open-workbench]').forEach(function(el){
+    el.addEventListener('click', function(e){
+      e.preventDefault();
+      openWorkbench();
+    });
+  });
+  wbClose.addEventListener('click', closeWorkbench);
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && !workbench.hidden) closeWorkbench();
+  });
+  wbConnectFromForm.addEventListener('click', function(){
+    openModal(null);
+  });
+
+  var SYSTEM_PROMPT = 'You are a pricing strategy analyst. Given a product description, respond with ONLY a raw JSON object — no markdown fences, no commentary — in exactly this shape: {"tiers":[{"name":string,"price":number,"segment":string,"features":[string],"rationale":string}],"wtp":{"low":number,"mid":number,"high":number},"competitors":[{"name":string,"price":number,"notes":string}],"risks":[string]}. Produce exactly 3 tiers ordered low to high price, 3-5 features each. Numeric fields must be plain numbers with no currency symbols.';
+
+  function buildUserPrompt(f){
+    return 'Product: ' + f.name + '\nCategory: ' + f.category + '\nCurrency: ' + f.currency +
+      '\nTarget market: ' + (f.market || 'Not specified') + '\nPositioning notes: ' + (f.notes || 'None provided');
+  }
+
+  async function callOpenAI(key, userPrompt){
+    var res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt }
+        ]
+      })
+    });
+    if(!res.ok){ throw new Error('OpenAI returned ' + res.status + ' — check the key and try again.'); }
+    var data = await res.json();
+    return JSON.parse(stripFences(data.choices[0].message.content));
+  }
+
+  async function callAnthropic(key, userPrompt){
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-haiku-latest',
+        max_tokens: 1600,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+    if(!res.ok){ throw new Error('Anthropic returned ' + res.status + ' — check the key and try again.'); }
+    var data = await res.json();
+    var text = (data.content || []).map(function(b){ return b.text || ''; }).join('');
+    return JSON.parse(stripFences(text));
+  }
+
+  async function callGoogle(key, userPrompt){
+    var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(key), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: SYSTEM_PROMPT + '\n\n' + userPrompt }] }],
+        generationConfig: { responseMimeType: 'application/json' }
+      })
+    });
+    if(!res.ok){ throw new Error('Google returned ' + res.status + ' — check the key and try again.'); }
+    var data = await res.json();
+    var text = ((data.candidates || [])[0] || {}).content.parts.map(function(p){ return p.text || ''; }).join('');
+    return JSON.parse(stripFences(text));
+  }
+
+  function renderResults(data, currency){
+    lastResultTiers = data.tiers || [];
+    var tiersHtml = lastResultTiers.map(function(t, i){
+      return '<div class="result-tier">' +
+        '<div class="rt-head"><span class="rt-name">' + escapeHtml(t.name) + '</span>' +
+        '<span class="rt-price">' + escapeHtml(currency) + ' ' + Math.round(t.price || 0) + '/mo</span></div>' +
+        '<div class="rt-segment">' + escapeHtml(t.segment) + '</div>' +
+        '<ul class="rt-features">' + (t.features || []).map(function(f){ return '<li>' + escapeHtml(f) + '</li>'; }).join('') + '</ul>' +
+        '<p class="rt-rationale">' + escapeHtml(t.rationale) + '</p>' +
+        '<button class="btn btn-ghost btn-small rt-sim-btn" type="button" data-tier-index="' + i + '">Simulate this tier →</button>' +
+        '</div>';
+    }).join('');
+
+    var wtp = data.wtp || {};
+    var wtpHtml = '<div class="wtp-band">' +
+      '<div><div class="k">Low</div><div class="v">' + escapeHtml(currency) + ' ' + Math.round(wtp.low || 0) + '</div></div>' +
+      '<div><div class="k">Mid</div><div class="v">' + escapeHtml(currency) + ' ' + Math.round(wtp.mid || 0) + '</div></div>' +
+      '<div><div class="k">High</div><div class="v">' + escapeHtml(currency) + ' ' + Math.round(wtp.high || 0) + '</div></div>' +
+      '</div>';
+
+    var compHtml = '<div class="competitor-list">' + (data.competitors || []).map(function(c){
+      return '<div class="competitor-row"><span class="c-name">' + escapeHtml(c.name) + '</span>' +
+        '<span class="c-notes">' + escapeHtml(c.notes) + '</span>' +
+        '<span class="c-price">' + escapeHtml(currency) + ' ' + Math.round(c.price || 0) + '</span></div>';
+    }).join('') + '</div>';
+
+    var riskHtml = '<div class="risk-list">' + (data.risks || []).map(function(r){
+      return '<div class="risk-row">' + escapeHtml(r) + '</div>';
+    }).join('') + '</div>';
+
+    wbResults.innerHTML =
+      '<div class="wb-section-label">Tier recommendations</div>' + '<div class="tier-grid">' + tiersHtml + '</div>' +
+      '<div class="wb-section-label">Willingness to pay</div>' + wtpHtml +
+      '<div class="wb-section-label">Competitor context</div>' + compHtml +
+      '<div class="wb-section-label">Risks & assumptions</div>' + riskHtml;
+
+    wbResults.querySelectorAll('.rt-sim-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var idx = parseInt(btn.getAttribute('data-tier-index'), 10);
+        var tier = lastResultTiers[idx];
+        if(tier) applyTierToSimulator(tier);
+      });
+    });
+  }
+
+  function applyTierToSimulator(tier){
+    var price = Math.max(1, Math.round(tier.price || BASE_PRICE));
+    BASE_PRICE = price;
+    priceSlider.min = Math.max(1, Math.round(price * 0.4));
+    priceSlider.max = Math.round(price * 2.6);
+    priceSlider.value = price;
+    elastSlider.value = 120;
+    var simLabel = document.querySelector('.sim-head span:first-child');
+    if(simLabel) simLabel.innerHTML = '<span class="sim-dot"></span>Scenario simulator — ' + escapeHtml(tier.name);
+    compute();
+    closeWorkbench();
+    setTimeout(function(){
+      document.querySelector('.sim-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  }
+
+  wbForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    wbError.hidden = true;
+    var keys = loadKeys();
+    var provider = projProvider.value;
+    if(!provider || !keys[provider]){
+      wbError.textContent = 'Connect an AI key for at least one provider before running an analysis.';
+      wbError.hidden = false;
+      return;
+    }
+    var fields = {
+      name: document.getElementById('projName').value.trim(),
+      category: document.getElementById('projCategory').value.trim(),
+      currency: document.getElementById('projCurrency').value,
+      market: document.getElementById('projMarket').value.trim(),
+      notes: document.getElementById('projNotes').value.trim()
+    };
+    if(!fields.name || !fields.category){
+      wbError.textContent = 'Product name and category are required.';
+      wbError.hidden = false;
+      return;
+    }
+
+    var userPrompt = buildUserPrompt(fields);
+    wbRunBtn.disabled = true;
+    wbResults.innerHTML = '<div class="wb-loading"><div class="spin"></div>Calling ' + PROVIDER_LABEL[provider] + ' directly from your browser…</div>';
+
+    try{
+      var data;
+      if(provider === 'openai') data = await callOpenAI(keys[provider], userPrompt);
+      else if(provider === 'anthropic') data = await callAnthropic(keys[provider], userPrompt);
+      else data = await callGoogle(keys[provider], userPrompt);
+
+      renderResults(data, fields.currency);
+    }catch(err){
+      wbResults.innerHTML = '<div class="wb-placeholder">Run failed: ' + escapeHtml(err.message || String(err)) +
+        '<br><br>If this is a CORS error, that provider may be blocking direct browser requests — ' +
+        'that\'s a provider-side restriction, not something this page can work around.</div>';
+    }finally{
+      wbRunBtn.disabled = !(loadKeys()[provider]);
+    }
+  });
+
+  // ---- Scenario simulator ----
+  var priceSlider = document.getElementById('priceSlider');
+  var elastSlider = document.getElementById('elastSlider');
+  var priceVal = document.getElementById('priceVal');
+  var elastVal = document.getElementById('elastVal');
+  var volOut = document.getElementById('volOut');
+  var revOut = document.getElementById('revOut');
+  var deltaOut = document.getElementById('deltaOut');
+
+  var BASE_PRICE = 49;
+  var BASE_VOLUME = 1000; // baseline subscribers at base price
+
+  function fmtCurrency(n){
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  function compute(){
+    var price = parseFloat(priceSlider.value);
+    var elastRaw = parseFloat(elastSlider.value) / 100; // e.g. 1.20
+    var elasticity = -elastRaw;
+
+    priceVal.textContent = '$' + price;
+    elastVal.textContent = '−' + elastRaw.toFixed(2);
+
+    // Constant-elasticity demand: V = V0 * (P/P0)^elasticity
+    var volume = BASE_VOLUME * Math.pow(price / BASE_PRICE, elasticity);
+    var revenue = volume * price;
+    var baseRevenue = BASE_VOLUME * BASE_PRICE;
+    var deltaPct = ((revenue - baseRevenue) / baseRevenue) * 100;
+
+    volOut.textContent = Math.round(volume).toLocaleString('en-US');
+    revOut.textContent = fmtCurrency(revenue);
+
+    var sign = deltaPct >= 0 ? '+' : '−';
+    deltaOut.textContent = sign + Math.abs(deltaPct).toFixed(1) + '%';
+    deltaOut.classList.remove('delta-up','delta-down');
+    deltaOut.classList.add(deltaPct >= 0 ? 'delta-up' : 'delta-down');
+  }
+
+  priceSlider.addEventListener('input', compute);
+  elastSlider.addEventListener('input', compute);
+  compute();
+
+  // ---- Scroll reveal ----
+  var revealEls = document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, {threshold:0.15});
+    revealEls.forEach(function(el){ io.observe(el); });
+  } else {
+    revealEls.forEach(function(el){ el.classList.add('in'); });
+  }
+
+  // ---- Smooth anchor focus for accessibility ----
+  document.querySelectorAll('a[href^="#"]').forEach(function(a){
+    a.addEventListener('click', function(e){
+      var id = a.getAttribute('href').slice(1);
+      var target = document.getElementById(id);
+      if(target){
+        e.preventDefault();
+        target.scrollIntoView({behavior:'smooth', block:'start'});
+      }
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
