@@ -33,10 +33,8 @@ An AI-powered pricing strategy assistant that helps founders, startups, and busi
 ### AI Providers
 ![AI Providers](ss/providers.png)
 
-### Product Tagline & Positioning
-![Tagline](ss/tagline.png)
-
-
+### Stop Pricing by Vibes
+![Stop Pricing by Vibes](ss/tagline.png)
 
 ## Note
 
